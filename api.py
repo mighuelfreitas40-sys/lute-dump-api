@@ -10,9 +10,8 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 ROOT = pathlib.Path(__file__).resolve().parent
-LUNE = ROOT / "lune"
-LUTE = ROOT / "lute"
-TIMEOUT = 100
+RUN_SCRIPT = ROOT / "run.sh"
+TIMEOUT = 120
 
 TIME_RE = re.compile(r"Finished processing in ([\d.]+) seconds", re.I)
 
@@ -25,17 +24,13 @@ def run_lute_dump(source_code: str) -> dict:
 
         in_file.write_text(source_code, encoding="utf-8", errors="ignore")
 
-        env = os.environ.copy()
-        env["HOOKOP_BIN"] = str(LUTE)
-
-        in_rel = str(in_file.relative_to(ROOT))
-        out_rel = str(out_file.relative_to(ROOT))
-
         started = time.perf_counter()
         proc = subprocess.Popen(
-            [str(LUNE), "run", "main.luau", in_rel, f"out={out_rel}"],
-            cwd=str(ROOT), env=env,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            ["bash", str(RUN_SCRIPT), str(in_file), str(out_file)],
+            cwd=str(ROOT),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
         )
 
         try:
